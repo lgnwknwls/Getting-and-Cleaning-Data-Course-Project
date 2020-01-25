@@ -1,0 +1,103 @@
+---
+title: "CodeBook"
+output: html_document
+---
+
+# Course Project Definition
+1) Merges the training and the test sets to create one data set
+2) Extracts only the measurements on the mean and standard deviation for each measurement
+3) Uses descriptive activity names to name the activities in the data set
+4) Appropriately labels the data set with descriptive variable names
+5) From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject
+
+# 1) Merges the training and the test sets to create one data set
+## Download Data
+The UCI HAR Dataset is downloaded from: [Dataset](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip)
+
+```{r eval = FALSE}
+fileurl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+if (!file.exists("./UCI HAR Dataset")) {
+  #don't redownload/extract if data already exists
+  download.file(fileurl,'./uciDataset.zip', mode = 'wb')
+  unzip("uciDataset.zip", exdir = getwd())
+}
+```
+
+## Import into R for Editing
+*featuresList*-- features are read in from the dataset's list and describe the datapoints that were collected <br />
+*activityList*-- activities are also read in from the dataset's list and describe what physical activity the subject was doing when the datapoints were collected <br />
+*train/testX*-- values of collected datapoints <br />
+*train/testY*-- enum of activity being performed during corresponding X's recording <br />
+*train/testSubject*-- list of subject's ID numbers who partook in training or testing <br />
+
+```{r eval = FALSE}
+featuresList <- read.csv("./UCI HAR Dataset/features.txt",header = FALSE, sep = " ")
+featuresList <- as.character(featuresList[,2])
+activityList <- read.csv("UCI HAR Dataset/activity_labels.txt", header = FALSE, sep = " ")
+activityList <- as.character(activityList[,2])
+
+trainX <- read.table("./UCI HAR Dataset/train/X_train.txt", col.names=featuresList)
+trainY <- read.table("./UCI HAR Dataset/train/y_train.txt",header = FALSE, sep = " ",col.names = "Activity")
+trainSubject <- read.table("./UCI HAR Dataset/train/subject_train.txt",header = FALSE, sep = " ", col.names="Subject")
+
+testX <- read.table("./UCI HAR Dataset/test/X_test.txt",col.names=featuresList)
+testY <- read.table("./UCI HAR Dataset/test/y_test.txt",header = FALSE, sep = " ",col.names = "Activity")
+testSubject <- read.table("./UCI HAR Dataset/test/subject_test.txt",header = FALSE, sep = " ", col.names="Subject")
+```
+
+# 2) Extracts only the measurements on the mean and standard deviation for each measurement.
+## Merge Data Sets
+*X*-- Appended *testX* and *trainX* into one table <br />
+*Y*-- Appended *trainY* and *trainY* into one table <br />
+*Subject*-- Appended *testSubject* and *trainSubject* into one table <br />
+*data*-- Merged (by column) the three above tables into one large table. <br />
+
+```{r eval = FALSE}
+X <- rbind(testX,trainX)
+Y <- rbind(testY,trainY)
+Subject <- rbind(testSubject, trainSubject)
+data <- cbind(Subject,Y,X)
+```
+## Extract only Standard Deviation and Mean Columns
+*mean_stddev_data*-- Same structure as *data* however columns have been filtered to ones containing only **mean** and **std**
+```{r eval=FALSE}
+mean_stddev_data <- data %>% select(Subject, Activity, contains("mean"), contains("std"))
+```
+
+# 3) Uses descriptive activity names to name the activities in the data set
+*tidy_mean_stddev_data*-- Contains the same data as *mean_stddev_data* however has replaced the enum **Activity** column with human readable terms
+```{r eval=FALSE}
+#replace activity number with english name
+tidy_mean_stddev_data <- mean_stddev_data
+tidy_mean_stddev_data$Activity <- activityList[tidy_mean_stddev_data$Activity]
+```
+
+# 4) Appropriately labels the data set with descriptive variable names
+Further modificaiton to *tidy_mean_stddev_data* where columns names are updated from shorthand to human readable camel caped phrases
+```{r eval=FALSE}
+#make column names human readable, capitilizing for keep camel caps
+names(tidy_mean_stddev_data)<-gsub("Acc", "Accelerometer", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("Gyro", "Gyroscope", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("BodyBody", "Body", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("Mag", "Magnitude", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("^t", "Time", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("^f", "Frequency", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("tBody", "TimeBody", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub(".mean()", "Mean", names(tidy_mean_stddev_data), ignore.case = TRUE)
+names(tidy_mean_stddev_data)<-gsub(".std()", "STD", names(tidy_mean_stddev_data), ignore.case = TRUE)
+names(tidy_mean_stddev_data)<-gsub(".freq()", "Frequency", names(tidy_mean_stddev_data), ignore.case = TRUE)
+names(tidy_mean_stddev_data)<-gsub("angle", "Angle", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("gravity", "Gravity", names(tidy_mean_stddev_data))
+```
+
+# 5) From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject
+*tidy_averages_data* is *tidey_mean_stddev_data* grouped by all **Subject** and **Activity** pairs and the average of each feature within the pair. <br />
+*tidy_averages_data* is then written out into a .txt value for evaluation outside of R.
+
+```{r eval=FALSE}
+tidy_averages_data <- tidy_mean_stddev_data
+tidy_averages_data <- tidy_averages_data %>% group_by(Subject, Activity) %>% summarise_all(mean)
+
+#export this final data set
+write.table(tidy_averages_data,file="Averages of Subject and Activity.txt", row.names = FALSE) # row.names removes row numbers so no index column needs to be added
+```
