@@ -88,6 +88,7 @@ names(tidy_mean_stddev_data)<-gsub(".std()", "STD", names(tidy_mean_stddev_data)
 names(tidy_mean_stddev_data)<-gsub(".freq()", "Frequency", names(tidy_mean_stddev_data), ignore.case = TRUE)
 names(tidy_mean_stddev_data)<-gsub("angle", "Angle", names(tidy_mean_stddev_data))
 names(tidy_mean_stddev_data)<-gsub("gravity", "Gravity", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("\\.","",names(tidy_mean_stddev_data))
 ```
 
 # 5) From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject

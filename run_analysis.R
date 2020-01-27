@@ -49,6 +49,7 @@ names(tidy_mean_stddev_data)<-gsub(".std()", "STD", names(tidy_mean_stddev_data)
 names(tidy_mean_stddev_data)<-gsub(".freq()", "Frequency", names(tidy_mean_stddev_data), ignore.case = TRUE)
 names(tidy_mean_stddev_data)<-gsub("angle", "Angle", names(tidy_mean_stddev_data))
 names(tidy_mean_stddev_data)<-gsub("gravity", "Gravity", names(tidy_mean_stddev_data))
+names(tidy_mean_stddev_data)<-gsub("\\.","", names(tidy_mean_stddev_data))
 
 ##Organize/Calculate averages for each column for each subject and activity pair
 tidy_averages_data <- tidy_mean_stddev_data
